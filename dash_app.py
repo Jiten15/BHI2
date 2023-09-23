@@ -42,6 +42,239 @@ df['year'] = pd.to_datetime(df['Invoice Date']).dt.year
 df['month'] = pd.to_datetime(df['Invoice Date']).dt.month
 df['day'] = pd.to_datetime(df['Invoice Date']).dt.day
 
+# df3= df[['Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin']]
+
+
+
+def feature_1():
+
+    # st.title("Select a Column from DataFrame")
+
+    selected_column = st.sidebar.selectbox("Select a Feature:", ['Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin'])
+
+    # Display the selected column from the DataFrame
+    # st.write(f"Selected Column: {selected_column}")
+    # st.write(df[selected_column])
+
+
+
+    st.title("Date Range should be in between Jan,2020-Dec,2021")
+
+    # Sidebar for user input
+    start_date = st.sidebar.date_input("Select a Start Date")
+    end_date = st.sidebar.date_input("Select an End Date")
+
+    # Check if the start date is before the end date
+    if start_date <= end_date:
+        st.write(f"Start Date: {start_date}")
+        st.write(f"End Date: {end_date}")
+        
+        # Convert dates to datetime objects for filtering
+        start_date = datetime.combine(start_date, datetime.min.time())
+        end_date = datetime.combine(end_date, datetime.max.time())
+        
+
+    st.title("Time Period Selector")
+
+    time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly"])
+
+
+    # Function to group data by selected time period
+    # def group_data_by_time_period(df, time_period):
+    
+    if time_period == "Monthly":
+        dates = pd.date_range(start=start_date,end=end_date,freq="MS")
+        # monthly_df = df[df['date'].isin(monthly_dates)].copy()
+        # dates_d=monthly_dates
+    elif time_period == "Quarterly":
+        dates = pd.date_range(start=start_date,end=end_date,freq="QS")
+        # quarterly_df = df[df['date'].isin(quarterly_dates)].copy()
+        # dates_d=quarterly_dates
+    elif time_period == "Yearly":
+        dates = pd.date_range(start=start_date,end=end_date,freq="Y")
+        # yearly_df = df[df['date'].isin(yearly_dates)].copy()
+        # dates_d=yearly_dates
+        # yearly_df.reset_index(drop=True, inplace=True)
+
+    
+
+    st.title("Click below button to Plot")
+
+    # Create a button
+    if st.button("Plot Graph"):
+        # Function to plot a simple graph
+        def plot(x1,y1):
+            trace1 = go.Scatter(x=x1, y=y1, mode='lines+markers', name='Actual')
+            layout = go.Layout(title="Actual")
+            fig = go.Figure(data=[trace1], layout=layout)
+            # pyo.iplot(fig)
+            st.plotly_chart(fig)
+
+
+        # Call the function
+
+        plot(dates,df[selected_column])
+
+
+def feature_2():
+
+	# st.title("Select a Column from DataFrame")
+
+	selected_column = st.sidebar.selectbox("Select a Feature:", ['Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin'])
+
+	# Display the selected column from the DataFrame
+	# st.write(f"Selected Column: {selected_column}")
+	# st.write(df[selected_column])
+
+
+
+	st.title("Date Range should be in between Jan,2020-Dec,2021")
+
+	# Sidebar for user input
+	start_date = st.sidebar.date_input("First Duration | Select a Start Date")
+	end_date = st.sidebar.date_input("First Duration | Select an End Date")
+
+	# Check if the start date is before the end date
+	if start_date <= end_date:
+	  st.write(f"Start Date: {start_date}")
+	  st.write(f"End Date: {end_date}")
+	  
+	  # Convert dates to datetime objects for filtering
+	  start_date = datetime.combine(start_date, datetime.min.time())
+	  end_date = datetime.combine(end_date, datetime.max.time())
+	  
+
+	st.title("First Duration | Time Period Selector")
+
+	time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly"],key="s0")
+
+	if time_period == "Monthly":
+	  dates = pd.date_range(start=start_date,end=end_date,freq="MS")
+	elif time_period == "Quarterly":
+	  dates = pd.date_range(start=start_date,end=end_date,freq="QS")
+	elif time_period == "Yearly":
+	  dates = pd.date_range(start=start_date,end=end_date,freq="Y")
+	  
+
+	st.title("Date Range should be in between Jan,2020-Dec,2021")
+
+	# Sidebar for user input
+	start_date1 = st.sidebar.date_input("Second Duration | Select a Start Date",key="sd1")
+	end_date1 = st.sidebar.date_input("Second Duration | Select an End Date",key='sd2')
+
+	# Check if the start date is before the end date
+	if start_date1 <= end_date1:
+	  st.write(f"Start Date: {start_date1}")
+	  st.write(f"End Date: {end_date1}")
+	  
+	  # Convert dates to datetime objects for filtering
+	  start_date1 = datetime.combine(start_date1, datetime.min.time())
+	  end_date1 = datetime.combine(end_date1, datetime.max.time())
+	  
+
+	st.title("Time Period Selector")
+
+	time_period1 = st.sidebar.selectbox("Second Duration | Select a Time Period:", ["Monthly", "Quarterly", "Yearly"],key="s1")
+
+	if time_period == "Monthly":
+	  dates1 = pd.date_range(start=start_date1,end=end_date1,freq="MS")
+	elif time_period == "Quarterly":
+	  dates1 = pd.date_range(start=start_date1,end=end_date,freq="QS")
+	elif time_period == "Yearly":
+	  dates1 = pd.date_range(start=start_date1,end=end_date1,freq="Y")
+        
+
+
+
+    
+
+	st.title("Click below button to Compre Plots")
+
+	# Create a button
+	if st.button("Plot Graphs"):
+	  # Function to plot a simple graph
+		def plot(x1,y1):
+		   trace1 = go.Scatter(x=x1, y=y1, mode='lines+markers', name='Actual')
+		   layout = go.Layout(title="Actual")
+		   fig = go.Figure(data=[trace1], layout=layout)
+		   # pyo.iplot(fig)
+		   st.plotly_chart(fig,use_container_width=True)
+
+
+		# Call the function
+		col1, col2= st.columns(2)
+
+		with col1:
+			plot(dates,df[selected_column])  
+		
+		with col2:
+			plot(dates1,df[selected_column])       
+
+
+
+
+
+
+
+def feature_forecast():
+
+	st.title("Total Sales Forecasting")
+
+	df['Date'] = pd.to_datetime(df['Invoice Date'])
+
+	df2= df[['Date', 'Total Sales']]
+	df2 = df2.groupby('Date')[['Total Sales']].sum().reset_index()
+
+	df2.set_index('Date', inplace=True)
+
+	model=sm.tsa.statespace.SARIMAX(df2['Total Sales'],order=(1, 1, 1),seasonal_order=(1,1,1,12))
+	results=model.fit()
+	
+	start_date = st.sidebar.date_input("Select a Start Date")
+	end_date = st.sidebar.date_input("Select an End Date")
+
+  
+	if start_date <= end_date:
+	   st.write(f"Start Date: {start_date}")
+	   st.write(f"End Date: {end_date}")
+	     
+	   start_date = pd.to_datetime(start_date)
+	   end_date = pd.to_datetime(end_date)
+
+	frequency = st.sidebar.selectbox("Select a Time Period Frequency:", ["Monthly", "Quarterly", "Yearly"])
+
+
+	if frequency=="Monthly":
+	    frequency='MS'
+	elif frequency=="Quarterly":
+	    frequency='QS'
+	elif frequency=="Yearly":
+	    frequency='Y'
+	    
+	if st.button("Plot Forecaste"):
+
+		index_future_dates=pd.date_range(start=start_date,end=end_date,freq=frequency)
+		#print(index_future_dates
+		C=len(index_future_dates)
+		pred=results.predict(start=len(df2),end=len(df2)+C-1,typ='levels').rename('ARIMA Predictions')
+		#print(comp_pred)
+		pred.index=index_future_dates
+		# print(pred)
+
+		fig = go.Figure()
+
+		fig.add_trace(go.Scatter(x=pred.index, y=pred, mode='lines', name='Forecast Sales'))
+
+		# Update the layout of the plot
+		fig.update_layout(title='Forecasted Sales ',
+		                  xaxis_title='Date',
+		                  yaxis_title='Total Sales')
+
+		# Show the plot
+		st.plotly_chart(fig)
+
+
+
 
 
 def feature_predictions():
@@ -220,14 +453,13 @@ def sideBar():
         default_index=0
     )
  if selected=="Home":
-    #st.subheader(f"Page: {selected}")
+    
     Home()
-    # graphs()
+    
  if selected=="Plot a Feature":
     st.subheader(f"Page: {selected}")
     feature_1()
-    # Progressbar()
-    # graphs()
+    
 
  if selected=="Compare Two Durations of a Feature":
     st.subheader(f"Page: {selected}")
@@ -235,7 +467,7 @@ def sideBar():
 
  if selected=="Forecast a Feature":
     st.subheader(f"Page: {selected}")
-    feature_3()
+    feature_forecast()
 
  if selected=="Predictions":
     st.subheader(f"Page: {selected}")
