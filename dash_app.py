@@ -76,7 +76,7 @@ def feature_1():
 
     st.title("Time Period Selector")
 
-    time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly"])
+    time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly","Daily"])
 
 
     # Function to group data by selected time period
@@ -92,6 +92,9 @@ def feature_1():
         # dates_d=quarterly_dates
     elif time_period == "Yearly":
         dates = pd.date_range(start=start_date,end=end_date,freq="Y")
+    elif time_period == "Daily":
+        dates = pd.date_range(start=start_date,end=end_date,freq="D")
+
         # yearly_df = df[df['date'].isin(yearly_dates)].copy()
         # dates_d=yearly_dates
         # yearly_df.reset_index(drop=True, inplace=True)
@@ -126,7 +129,7 @@ def feature_2():
 	# st.write(f"Selected Column: {selected_column}")
 	# st.write(df[selected_column])
 
-
+	############ 1 ###############
 
 	st.title("Date Range should be in between Jan,2020-Dec,2021")
 
@@ -146,15 +149,19 @@ def feature_2():
 
 	st.title("First Duration | Time Period Selector")
 
-	time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly"],key="s0")
+	time_period = st.sidebar.selectbox("First Duration | Select a Time Period:", ["Monthly", "Quarterly", "Yearly","Daily"],key="s0")
 
 	if time_period == "Monthly":
-	  dates = pd.date_range(start=start_date,end=end_date,freq="MS")
+	  	dates = pd.date_range(start=start_date,end=end_date,freq="MS")
 	elif time_period == "Quarterly":
-	  dates = pd.date_range(start=start_date,end=end_date,freq="QS")
+	  	dates = pd.date_range(start=start_date,end=end_date,freq="QS")
 	elif time_period == "Yearly":
-	  dates = pd.date_range(start=start_date,end=end_date,freq="Y")
+	  	dates = pd.date_range(start=start_date,end=end_date,freq="Y")
+	elif time_period == "Daily":
+		dates = pd.date_range(start=start_date,end=end_date,freq="D")  
 	  
+
+	############# 2 ##################  
 
 	st.title("Date Range should be in between Jan,2020-Dec,2021")
 
@@ -174,14 +181,16 @@ def feature_2():
 
 	st.title("Time Period Selector")
 
-	time_period1 = st.sidebar.selectbox("Second Duration | Select a Time Period:", ["Monthly", "Quarterly", "Yearly"],key="s1")
+	time_period1 = st.sidebar.selectbox("Second Duration | Select a Time Period:", ["Monthly", "Quarterly", "Yearly","Daily"],key="s1")
 
 	if time_period == "Monthly":
-	  dates1 = pd.date_range(start=start_date1,end=end_date1,freq="MS")
+	  	dates1 = pd.date_range(start=start_date1,end=end_date1,freq="MS")
 	elif time_period == "Quarterly":
-	  dates1 = pd.date_range(start=start_date1,end=end_date,freq="QS")
+	  	dates1 = pd.date_range(start=start_date1,end=end_date,freq="QS")
 	elif time_period == "Yearly":
-	  dates1 = pd.date_range(start=start_date1,end=end_date1,freq="Y")
+	  	dates1 = pd.date_range(start=start_date1,end=end_date1,freq="Y")
+	elif time_period == "Daily":
+		dates1 = pd.date_range(start=start_date1,end=end_date1,freq="D")  
         
 
 
@@ -241,7 +250,7 @@ def feature_forecast():
 	   start_date = pd.to_datetime(start_date)
 	   end_date = pd.to_datetime(end_date)
 
-	frequency = st.sidebar.selectbox("Select a Time Period Frequency:", ["Monthly", "Quarterly", "Yearly"])
+	frequency = st.sidebar.selectbox("Select a Time Period Frequency:", ["Monthly", "Quarterly", "Yearly","Daily"])
 
 
 	if frequency=="Monthly":
@@ -250,6 +259,8 @@ def feature_forecast():
 	    frequency='QS'
 	elif frequency=="Yearly":
 	    frequency='Y'
+	elif frequency=="Daily":
+	    frequency='D'    
 	    
 	if st.button("Plot Forecaste"):
 
