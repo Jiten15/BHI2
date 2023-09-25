@@ -37,6 +37,10 @@ with open('style.css')as f:
 
 df=pd.read_excel('ad.xlsx')
 
+# 'Retailer', 'Retailer ID', 'Invoice Date', 'Region', 'State', 'City',
+#        'Product', 'Price per Unit', 'Units Sold', 'Total Sales',
+#        'Operating Profit', 'Operating Margin', 'Sales Method', 'Date'
+
 
 df['year'] = pd.to_datetime(df['Invoice Date']).dt.year
 df['month'] = pd.to_datetime(df['Invoice Date']).dt.month
@@ -48,80 +52,89 @@ df['day'] = pd.to_datetime(df['Invoice Date']).dt.day
 
 def feature_1():
 
-    # st.title("Select a Column from DataFrame")
-
-    selected_column = st.sidebar.selectbox("Select a Feature:", ['Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin'])
-
-    # Display the selected column from the DataFrame
-    # st.write(f"Selected Column: {selected_column}")
-    # st.write(df[selected_column])
-
+	df_new = df.groupby('Invoice Date').agg({
+		'Price per Unit': 'sum',
+    	'Units Sold': 'sum',
+    	'Total Sales': 'sum',
+    	'Operating Profit': 'sum',
+    	'Operating Margin': 'mean'}).reset_index()
 
 
-    st.title("Date Range should be in between Jan,2020-Dec,2021")
+	df_new['Invoice Date'] = pd.to_datetime(df_new['Invoice Date'])
 
-    # Sidebar for user input
-    start_date = st.sidebar.date_input("Select a Start Date")
-    end_date = st.sidebar.date_input("Select an End Date")
+	
 
-    # Check if the start date is before the end date
-    if start_date <= end_date:
-        st.write(f"Start Date: {start_date}")
-        st.write(f"End Date: {end_date}")
-        
-        # Convert dates to datetime objects for filtering
-        start_date = datetime.combine(start_date, datetime.min.time())
-        end_date = datetime.combine(end_date, datetime.max.time())
-        
-
-    st.title("Time Period Selector")
-
-    time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly","Daily"])
+	selected_column = st.sidebar.selectbox("Select a Feature:", ['Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin'])
 
 
-    # Function to group data by selected time period
-    # def group_data_by_time_period(df, time_period):
-    
-    if time_period == "Monthly":
-        dates = pd.date_range(start=start_date,end=end_date,freq="MS")
-        # monthly_df = df[df['date'].isin(monthly_dates)].copy()
-        # dates_d=monthly_dates
-    elif time_period == "Quarterly":
-        dates = pd.date_range(start=start_date,end=end_date,freq="QS")
-        # quarterly_df = df[df['date'].isin(quarterly_dates)].copy()
-        # dates_d=quarterly_dates
-    elif time_period == "Yearly":
-        dates = pd.date_range(start=start_date,end=end_date,freq="Y")
-    elif time_period == "Daily":
-        dates = pd.date_range(start=start_date,end=end_date,freq="D")
 
-        # yearly_df = df[df['date'].isin(yearly_dates)].copy()
-        # dates_d=yearly_dates
-        # yearly_df.reset_index(drop=True, inplace=True)
+	st.title("Date Range should be in between Jan,2020-Dec,2021")
 
-    
+	# Sidebar for user input
+	start_date = st.sidebar.date_input("Select a Start Date")
+	end_date = st.sidebar.date_input("Select an End Date")
 
-    st.title("Click below button to Plot")
+	# Check if the start date is before the end date
+	if start_date <= end_date:
+	  st.write(f"Start Date: {start_date}")
+	  st.write(f"End Date: {end_date}")
+	  
+	  # Convert dates to datetime objects for filtering
+	  start_date = datetime.combine(start_date, datetime.min.time())
+	  end_date = datetime.combine(end_date, datetime.max.time())
+	  
 
-    # Create a button
-    if st.button("Plot Graph"):
-        # Function to plot a simple graph
-        def plot(x1,y1):
-            trace1 = go.Scatter(x=x1, y=y1, mode='lines+markers', name='Actual')
-            layout = go.Layout(title="Actual")
-            fig = go.Figure(data=[trace1], layout=layout)
-            # pyo.iplot(fig)
-            st.plotly_chart(fig)
+	st.title("Time Period Selector")
+
+	time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly","Daily"])
 
 
-        # Call the function
 
-        plot(dates,df[selected_column])
+	if time_period == "Monthly":
+	  dates = pd.date_range(start=start_date,end=end_date,freq="MS")
+	  # monthly_df = df[df['date'].isin(monthly_dates)].copy()
+	  # dates_d=monthly_dates
+	elif time_period == "Quarterly":
+	  dates = pd.date_range(start=start_date,end=end_date,freq="QS")
+	  # quarterly_df = df[df['date'].isin(quarterly_dates)].copy()
+	  # dates_d=quarterly_dates
+	elif time_period == "Yearly":
+	  dates = pd.date_range(start=start_date,end=end_date,freq="Y")
+	elif time_period == "Daily":
+	  dates = pd.date_range(start=start_date,end=end_date,freq="D")
+
+
+
+	st.title("Click below button to Plot")
+
+	if st.button("Plot Graph"):
+
+		filtered_df=df_new[df_new['Invoice Date'].isin(dates)]
+
+
+		def plot(x1,y1):
+
+				
+			trace1 = go.Scatter(x=x1,y=y1, mode='lines+markers', name='Actual')
+			layout = go.Layout(title="Actual")
+			fig = go.Figure(data=[trace1], layout=layout)
+			st.plotly_chart(fig)
+
+
+		plot(filtered_df['Invoice Date'],filtered_df[selected_column])
 
 
 def feature_2():
 
-	# st.title("Select a Column from DataFrame")
+	df_new = df.groupby('Invoice Date').agg({
+		'Price per Unit': 'sum',
+    	'Units Sold': 'sum',
+    	'Total Sales': 'sum',
+    	'Operating Profit': 'sum',
+    	'Operating Margin': 'mean'}).reset_index()
+
+
+	df_new['Invoice Date'] = pd.to_datetime(df_new['Invoice Date'])
 
 	selected_column = st.sidebar.selectbox("Select a Feature:", ['Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin'])
 
@@ -201,6 +214,9 @@ def feature_2():
 
 	# Create a button
 	if st.button("Plot Graphs"):
+
+		filtered_df1=df_new[df_new['Invoice Date'].isin(dates)]
+		filtered_df2=df_new[df_new['Invoice Date'].isin(dates1)]
 	  # Function to plot a simple graph
 		def plot(x1,y1):
 		   trace1 = go.Scatter(x=x1, y=y1, mode='lines+markers', name='Actual')
@@ -214,10 +230,10 @@ def feature_2():
 		col1, col2= st.columns(2)
 
 		with col1:
-			plot(dates,df[selected_column])  
+			plot(filtered_df1['Invoice Date'],filtered_df1[selected_column])  
 		
 		with col2:
-			plot(dates1,df[selected_column])       
+			plot(filtered_df2['Invoice Date'],filtered_df2[selected_column])       
 
 
 
