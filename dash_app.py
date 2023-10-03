@@ -507,70 +507,70 @@ def budget_planning():
 	print(f"New Product Budget Allocations: {new_product_budgets}")
 
 
-def Assistant():
-	import os
+# def Assistant():
+# 	import os
 
-	os.environ['OPENAI_API_KEY'] = "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"
+# 	os.environ['OPENAI_API_KEY'] = "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"
 
-	# OPENAI_API_KEY="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"
+# 	# OPENAI_API_KEY="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"
 
 
-	user_api_key = "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"
+# 	user_api_key = "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"
 
-	uploaded_file = st.sidebar.file_uploader("upload", type="csv")
+# 	uploaded_file = st.sidebar.file_uploader("upload", type="csv")
 
-	if uploaded_file :
-		with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-		  tmp_file.write(uploaded_file.getvalue())
-		  tmp_file_path = tmp_file.name
+# 	if uploaded_file :
+# 		with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+# 		  tmp_file.write(uploaded_file.getvalue())
+# 		  tmp_file_path = tmp_file.name
 
-		loader = CSVLoader(file_path=tmp_file_path, encoding="utf-8")
-		data = loader.load()
+# 		loader = CSVLoader(file_path=tmp_file_path, encoding="utf-8")
+# 		data = loader.load()
 
-		embeddings = OpenAIEmbeddings()
-		vectors = FAISS.from_documents(data, embeddings)
+# 		embeddings = OpenAIEmbeddings()
+# 		vectors = FAISS.from_documents(data, embeddings)
 
-		chain = ConversationalRetrievalChain.from_llm(llm = ChatOpenAI(temperature=0.0,model_name='gpt-3.5-turbo', openai_api_key="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"),
-		                                                                retriever=vectors.as_retriever())
+# 		chain = ConversationalRetrievalChain.from_llm(llm = ChatOpenAI(temperature=0.0,model_name='gpt-3.5-turbo', openai_api_key="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"),
+# 		                                                                retriever=vectors.as_retriever())
 
-		def conversational_chat(query):
+# 		def conversational_chat(query):
 		  
-		  result = chain({"question": query, "chat_history": st.session_state['history']})
-		  st.session_state['history'].append((query, result["answer"]))
+# 		  result = chain({"question": query, "chat_history": st.session_state['history']})
+# 		  st.session_state['history'].append((query, result["answer"]))
 		  
-		  return result["answer"]
+# 		  return result["answer"]
 
-		if 'history' not in st.session_state:
-		  st.session_state['history'] = []
+# 		if 'history' not in st.session_state:
+# 		  st.session_state['history'] = []
 
-		if 'generated' not in st.session_state:
-		  st.session_state['generated'] = ["Hello ! Ask me anything about " + uploaded_file.name + " 🤗"]
+# 		if 'generated' not in st.session_state:
+# 		  st.session_state['generated'] = ["Hello ! Ask me anything about " + uploaded_file.name + " 🤗"]
 
-		if 'past' not in st.session_state:
-		  st.session_state['past'] = ["Hey ! 👋"]
+# 		if 'past' not in st.session_state:
+# 		  st.session_state['past'] = ["Hey ! 👋"]
 		  
-		#container for the chat history
-		response_container = st.container()
-		#container for the user's text input
-		container = st.container()
+# 		#container for the chat history
+# 		response_container = st.container()
+# 		#container for the user's text input
+# 		container = st.container()
 
-		with container:
-		  with st.form(key='my_form', clear_on_submit=True):
+# 		with container:
+# 		  with st.form(key='my_form', clear_on_submit=True):
 		      
-		      user_input = st.text_input("Query:", placeholder="Talk about your csv data here (:", key='input')
-		      submit_button = st.form_submit_button(label='Send')
+# 		      user_input = st.text_input("Query:", placeholder="Talk about your csv data here (:", key='input')
+# 		      submit_button = st.form_submit_button(label='Send')
 		      
-		  if submit_button and user_input:
-		      output = conversational_chat(user_input)
+# 		  if submit_button and user_input:
+# 		      output = conversational_chat(user_input)
 		      
-		      st.session_state['past'].append(user_input)
-		      st.session_state['generated'].append(output)
+# 		      st.session_state['past'].append(user_input)
+# 		      st.session_state['generated'].append(output)
 
-		if st.session_state['generated']:
-		  with response_container:
-		      for i in range(len(st.session_state['generated'])):
-		          message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
-		          message(st.session_state["generated"][i], key=str(i), avatar_style="thumbs")
+# 		if st.session_state['generated']:
+# 		  with response_container:
+# 		      for i in range(len(st.session_state['generated'])):
+# 		          message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
+# 		          message(st.session_state["generated"][i], key=str(i), avatar_style="thumbs")
 
 
 
@@ -1002,7 +1002,7 @@ def sideBar():
  with st.sidebar:
     selected=option_menu(
         menu_title="Main Menu",
-        options=["Home","Predictions","Plot a Feature","Compare Two Durations of a Feature","Forecast a Feature", "Budget Planning","Recommendations","Assistant"],
+        options=["Home","Predictions","Plot a Feature","Compare Two Durations of a Feature","Forecast a Feature", "Budget Planning","Recommendations"],
         icons=["house"],
         menu_icon="cast",
         default_index=0
