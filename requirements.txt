@@ -25,4 +25,7 @@ pmdarima
 statsmodels
 seaborn
 numerize
-sklearn
+scikit-learn
+surprise
+langchain
+streamlit_chat
