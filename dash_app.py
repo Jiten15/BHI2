@@ -89,7 +89,7 @@ def recommendations():
 	user_id = st.text_input("Enter your User ID:", value="102")
 
 	# Display the user_id
-	st.write(f"You entered User ID: {user_id}")
+	st.write(f"You entered User ID ( 101 - 109 ): {user_id}")
 
 	# user_id = 101  # Replace with the actual user ID
 	products_rated_by_user = [product_id for user, product_id, rating in zip(data['user_id'], data['product_id'], data['rating']) if user == user_id]
