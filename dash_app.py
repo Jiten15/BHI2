@@ -89,7 +89,7 @@ def recommendations():
 	user_id = st.text_input("Enter your User ID:", value="102")
 
 	# Display the user_id
-	st.write(f"You entered User ID ( 101 - 109 ): {user_id}")
+	st.write(f"You entered User ID: {user_id}")
 
 	# user_id = 101  # Replace with the actual user ID
 	products_rated_by_user = [product_id for user, product_id, rating in zip(data['user_id'], data['product_id'], data['rating']) if user == user_id]
@@ -116,11 +116,7 @@ def recommendations():
 
 def qqt():
 
-	# Title for the Streamlit app
 	st.title("Budget Planning")
-
-	# Load your data or replace this with your actual data
-	# df = pd.read_csv("your_data.csv")
 
 	df['Date'] = pd.to_datetime(df['Invoice Date'])
 	df2 = df[['Date', 'Total Sales']]
@@ -131,9 +127,9 @@ def qqt():
 	results = model.fit()
 
 	frequency = 'D'
-	today = date.today()
+	
 
-	index_future_dates = pd.date_range(start="2020-01-01", end=today, freq=frequency)
+	index_future_dates = pd.date_range(start="2020-01-01", end="2021-04-02", freq=frequency)
 	C = len(index_future_dates)
 	pred = results.predict(start=len(df2), end=len(df2) + C - 1, typ='levels').rename('ARIMA Predictions')
 	pred.index = index_future_dates
@@ -148,10 +144,10 @@ def qqt():
 	data1['Date'] = pd.to_datetime(data1['Date'])
 
 	# Determine the last date in the data
-	last_date = data1['Date'].max()
+	last_date = "2021-04-02"
 
 	# Calculate the first date of the last quarter
-	last_quarter_start = pd.Timestamp(year=last_date.year, month=(last_date.month - 2) % 12 + 1, day=1)
+	last_quarter_start = pd.Timestamp(year=2021, month=1 + 1, day=1)
 
 	# Filter the data for the last quarter
 	last_quarter_data = data1[(data1['Date'] >= last_quarter_start) & (data1['Date'] <= last_date)]
@@ -163,31 +159,19 @@ def qqt():
 	total_last_quarter_forecast = np.sum(last_quarter_data['Forecast'])
 
 	# Print the total forecast value for the last quarter
-	st.write(f"Total Forecast Value for the Last Quarter: {total_last_quarter_forecast}")
+	# st.write(f"Total Forecast Value for the Last Quarter: {total_last_quarter_forecast}")
 
-	# Example initial company budget
-	initial_company_budget = st.number_input("Enter the Initial Company Budget:",value=20000000, min_value=0)
+	initial_company_budget = st.number_input("Enter the Initial Company Budget:",value=90000000, min_value=0)
+	i1=initial_company_budget
 
-	# Title for the Streamlit app
-	st.title("Product Budget Calculator")
 
-	# Create an empty dictionary to store the initial product budget
-	initial_product_budget = {}
+	# Example growth rate 
+	growth_rate = st.number_input("Enter the Growth Rate you want on recent revenue:",value=0.1, min_value=0.0)
 
-	# Define the product names
-	products = ['Product1', 'Product2', 'Product3']
 
-	# Create input fields for each product's budget
-	for product in products:
-	    budget = st.number_input(f"Enter the initial budget for {product}:", key=product, value=1800000,min_value=0)
-	    if budget:
-	        initial_product_budget[product] = budget
 
-	# Display the entered product budgets
-	if initial_product_budget:
-	    st.write("Initial Product Budgets:")
-	    for product, budget in initial_product_budget.items():
-	        st.write(f"{product}: ${budget:.2f}")
+
+
 
 
 	quarterly_sales = df2.resample('Q')['Total Sales'].sum()
@@ -199,8 +183,14 @@ def qqt():
 	revenues = last_quarter_sales  # Example initial revenue
 	last_budget_forecast = total_last_quarter_forecast  # Example last budget forecast
 
+
+
+
+
+
+
 	# Title for the Streamlit app
-	st.title("Company Expense Tracker")
+	# st.title("Company Expense Tracker")
 
 	# Create an empty dictionary to store company expenses
 	company_expenses = {}
@@ -208,16 +198,100 @@ def qqt():
 	# Define expense categories and ask users to input expenses
 	expense_categories = ['Salaries', 'Utilities', 'Rent', 'Marketing', 'Supplies', 'Other']
 
-	for category in expense_categories:
-	    expense_amount = st.number_input(f"Enter the expense for {category}:",value=1000000, key=category, min_value=0)
-	    if expense_amount:
-	        company_expenses[category] = expense_amount
+	# for category in expense_categories:
+	#     expense_amount = st.number_input(f"Enter the expense for {category}:",value=1000000, key=category, min_value=0)
+	#     if expense_amount:
+	company_expenses['Salaries'] = initial_company_budget*0.4
+	company_expenses['Utilities'] = initial_company_budget*0.1
+	company_expenses['Rent'] = initial_company_budget*0.15
+	company_expenses['Marketing'] = initial_company_budget*0.2
+	company_expenses['Supplies'] = initial_company_budget*0.1
+	company_expenses['Other'] = initial_company_budget*0.05
 
-	# Display the entered company expenses
-	if company_expenses:
-	    st.write("Company Expenses:")
-	    for category, amount in company_expenses.items():
-	        st.write(f"{category}: ${amount:.2f}")
+	data = {
+    'Category': expense_categories,
+    'Expense': list(company_expenses.values())
+	}
+
+	df11 = pd.DataFrame(data)
+
+	# Create a bar graph using Plotly Express
+	fig = px.bar(df11, x='Category', y='Expense', title='Company Expenses')
+
+	# Streamlit app
+	st.title('Company Expenses')
+	st.plotly_chart(fig, use_container_width=True)
+
+	#############
+
+
+	# Title for the Streamlit app
+	# st.title("Product Budget Calculator")
+
+	# Create an empty dictionary to store the initial product budget
+	initial_product_budget = {}
+
+	# Define the product names
+	products = ['Product1', 'Product2', 'Product3']
+
+	# Create input fields for each product's budget
+	# for product in products:
+	#     budget = st.number_input(f"Enter the initial budget for {product}:", key=product, value=1800000,min_value=0)
+	#     if budget:
+	#         initial_product_budget[product] = budget
+
+	initial_product_budget['Product1']=0.15*initial_company_budget
+	initial_product_budget['Product2']=0.6*initial_company_budget
+	initial_product_budget['Product3']=0.25*initial_company_budget
+
+	# Display the entered product budgets
+	# if initial_product_budget:
+	#     st.write("Initial Product Budgets:")
+	#     for product, budget in initial_product_budget.items():
+	#         st.write(f"{product}: ${budget:.2f}")
+
+
+	# Create an empty dictionary to store the New product budget
+	new_product_budget = {}
+
+	# Define the product names
+	products = ['Product1', 'Product2', 'Product3']
+
+	# Create input fields for each product's budget
+	for product in products:
+	    budget = initial_product_budget[str(product)]*growth_rate
+	    if budget:
+	        new_product_budget[product] = budget
+
+	#initial_product_budget
+	data13 = {
+    'Products': list(initial_product_budget.keys()) +list(new_product_budget.keys()),
+    'Allocations': list(initial_product_budget.values()) + list(new_product_budget.values()),
+    'BudgetType': ['Initial'] * len(initial_product_budget) + ['New'] * len(new_product_budget)
+	}
+
+	df13 = pd.DataFrame(data13)
+
+	# Create a bar graph using Plotly Express
+	fig13 = px.bar(df13, x='Products', y='Allocations', color='BudgetType',title='Product Budget Allocation')
+
+	# Streamlit app
+	st.title('Product Budget Allocation')
+	st.plotly_chart(fig13, use_container_width=True) 
+
+
+
+
+
+
+
+
+	
+	# # Display the entered company expenses
+	# if company_expenses:
+	#     st.write("Company Expenses:")
+	#     for category, amount in company_expenses.items():
+	#         st.write(f"{category}: ${amount:.2f}")
 
 	company_expenses = sum(company_expenses.values())
 	product_expenses = {product: 0 for product in initial_product_budget}
@@ -240,14 +314,9 @@ def qqt():
 	# Calculate and track variances
 	variance = calculate_variance(revenues, last_budget_forecast)
 
-	# Print budget-related information
-	st.write(f"Initial Company Budget: ${initial_company_budget:.2f}")
-	st.write("Initial Product Budgets:")
-	for product, budget in initial_product_budget.items():
-	    st.write(f"{product}: ${budget:.2f}")
-	st.write(f"Revenues: ${revenues:.2f}")
-	st.write(f"Last Budget Forecast: ${last_budget_forecast:.2f}")
-	st.write(f"Variance from Last Budget Forecast: ${variance:.2f}")
+
+
+
 
 	# Check if the budget still holds good if revenues are showing a dip
 	if variance < 0:
@@ -255,42 +324,64 @@ def qqt():
 	else:
 	    st.write("Budget holds good even with current revenues.")
 
+
+
+
+
 	# Function to allocate new budgets based on current revenues
 	def allocate_budget_based_on_revenues(initial_budget, current_revenues):
-	    return initial_budget - (initial_budget - current_revenues) * 0.2  # Adjust budget based on a percentage (e.g., 20%)
+	   return initial_budget+abs(initial_budget-current_revenues)* growth_rate  # Adjust budget based on a percentage (e.g., 10%)
+
+	def allocate_product_budget_based_on_revenues(budget, revenues):
+		return budget+abs(budget-revenues)* growth_rate
+
+
+
 
 	# Example: Allocate new budgets based on current revenues
 	new_company_budget = allocate_budget_based_on_revenues(initial_company_budget, revenues)
-	new_product_budgets = {product: allocate_budget_based_on_revenues(budget, revenues) for product, budget in initial_product_budget.items()}
+	new_product_budgets = {product: allocate_product_budget_based_on_revenues(budget, revenues) for product, budget in initial_product_budget.items()}
 
 	# Print new budget allocations
-	st.write(f"New Company Budget Allocation: ${new_company_budget:.2f}")
-	st.write("New Product Budget Allocations:")
-	for product, budget in new_product_budgets.items():
-	    st.write(f"{product}: ${budget:.2f}")
+	# # st.write(f"New Company Budget Allocation: ${new_company_budget:.2f}")
+	# st.write("New Product Budget Allocations:")
+	# for product, budget in new_product_budgets.items():
+	#     st.write(f"{product}: ${budget:.2f}")
+
+	data12 = {
+    'Category': ['Recent| Company Budget','New| Company Budget Allocation'],
+    'Allocations': [initial_company_budget, new_company_budget]
+	}
+
+	df12 = pd.DataFrame(data12)
+
+	# Create a bar graph using Plotly Express
+	fig12 = px.bar(df12, x='Category', y='Allocations', title='Budget Allocation')
+
+	# Streamlit app
+	st.title('Budget Allocation')
+	st.plotly_chart(fig12, use_container_width=True)    
 
 	################################################
 
-	st.title("If finance Team update The Sales Budget and If New Coustomers added. Then Revised Revenue Projections")
+
+
+
+
+
+
+
+
+
+	st.title("If New Coustomers added. Then Revised Revenue Projections")
 
 
 	# Initial sales budget and revenue projections
-	initial_sales_budget = last_quarter_sales  # Example initial sales budget
+	initial_sales_budget = initial_company_budget*0.4  # Example initial sales budget
 	initial_revenue_projections = last_budget_forecast  # Example initial revenue projections
-	arpc_per_sku = {
-	    'SKU1': 1000000,  # Example ARPC for SKU1
-	    'SKU2': 8000000,  # Example ARPC for SKU2
-	    'SKU3': 1200000  # Example ARPC for SKU3
-	}
+	
 
-	# Check for budget updates from the finance team
-	finance_updated_budget = st.number_input("Enter finance_updated_budget: ", value=200000000, min_value=0)
-
-	if finance_updated_budget > initial_sales_budget:
-	    st.write(f"Finance updated the budget to {finance_updated_budget}.")
-	    initial_sales_budget = finance_updated_budget
-	else:
-	    st.write("No budget update from finance.")
+	
 
 	# Create an input form for new customers
 	st.header("Add New Customers")
@@ -300,7 +391,6 @@ def qqt():
 	for i in range(num_new_customers):
 	    st.subheader(f"New Customer {i + 1}")
 	    customer_id = st.text_input(f"Enter Customer ID for Customer {i + 1}:")
-	    sku = st.selectbox(f"Select SKU for Customer {i + 1}:", list(arpc_per_sku.keys()))
 	    revenue = st.number_input(f"Enter Revenue for Customer {i + 1}:", min_value=0)
 	    new_customers.append({'customer_id': customer_id, 'sku': sku, 'revenue': revenue})
 
@@ -309,14 +399,209 @@ def qqt():
 	for customer in new_customers:
 	    additional_revenue += customer['revenue']
 
-	# Update revenue projections
-	revised_revenue_projections = initial_revenue_projections + additional_revenue
+	if st.button("Updated Revenue Projections"):    
 
-	# Print the results
-	st.write(f"Initial Sales Budget: {initial_sales_budget}")
-	st.write(f"Initial Revenue Projections: {initial_revenue_projections}")
-	st.write(f"Additional Revenue from New Customers: {additional_revenue}")
-	st.write(f"Revised Revenue Projections: {revised_revenue_projections}")
+		# Update revenue projections
+		revised_revenue_projections = initial_revenue_projections + additional_revenue
+
+		data14 = {
+	    'Revenue': ['Recent| Revenue Projections','New| Revised Revenue Projections'],
+	    'Projections': [initial_revenue_projections, revised_revenue_projections]
+		}
+
+		df14 = pd.DataFrame(data14)
+
+		# Create a bar graph using Plotly Express
+		fig14 = px.bar(df14, x='Revenue', y='Projections', title='Updated Revenue Projections')
+
+		# Streamlit app
+		st.title('Budget Allocation')
+		st.plotly_chart(fig14, use_container_width=True)   
+
+	
+	######################
+	st.title("If finance Team update Company Budget. Then Revised Projections")
+	# Check for budget updates from the finance team
+	finance_updated_budget = st.number_input("Enter finance_updated_budget: ", value=200000000, min_value=0)
+
+	if st.button("Updated Revenue Projections",key='k1'): 
+
+		
+		initial_company_budget = finance_updated_budget
+
+
+		st.title("Updated Budget Planning")
+
+		
+
+		# Create a DataFrame from your data
+		data1 = pd.DataFrame({'Date': x, 'Forecast': y})
+
+		# Convert the 'Date' column to a datetime data type
+		data1['Date'] = pd.to_datetime(data1['Date'])
+
+		# Determine the last date in the data
+		last_date = "2021-04-02"
+
+		# Calculate the first date of the last quarter
+		last_quarter_start = pd.Timestamp(year=2021, month=1 + 1, day=1)
+
+		# Filter the data for the last quarter
+		last_quarter_data = data1[(data1['Date'] >= last_quarter_start) & (data1['Date'] <= last_date)]
+
+
+		# Calculate the total forecast value for the last quarter
+		total_last_quarter_forecast = np.sum(last_quarter_data['Forecast'])
+
+
+		# Example growth rate 
+		# growth_rate = st.number_input("Enter the Growth Rate you want on recent revenue:",value=0.1, min_value=0.0)
+
+
+		quarterly_sales = df2.resample('Q')['Total Sales'].sum()
+
+		# Get the total sales for the last quarter
+		last_quarter_sales = quarterly_sales.iloc[-1]	
+		# st.write(last_quarter_sales)        
+
+		revenues = last_quarter_sales  # Example initial revenue
+		last_budget_forecast = total_last_quarter_forecast  # Example last budget forecast
+
+
+
+		# Create an empty dictionary to store company expenses
+		company_expenses = {}
+
+		# Define expense categories and ask users to input expenses
+		expense_categories = ['Salaries', 'Utilities', 'Rent', 'Marketing', 'Supplies', 'Other']
+
+		
+		company_expenses['Salaries'] = initial_company_budget*0.4
+		company_expenses['Utilities'] = initial_company_budget*0.1
+		company_expenses['Rent'] = initial_company_budget*0.15
+		company_expenses['Marketing'] = initial_company_budget*0.2
+		company_expenses['Supplies'] = initial_company_budget*0.1
+		company_expenses['Other'] = initial_company_budget*0.05
+
+		data21 = {
+	    'Category': expense_categories,
+	    'Expense': list(company_expenses.values())
+		}
+
+		df21 = pd.DataFrame(data21)
+
+		# Create a bar graph using Plotly Express
+		fig21 = px.bar(df21, x='Category', y='Expense', title='Company Expenses')
+
+		# Streamlit app
+		st.title('Updated Company Expenses')
+		st.plotly_chart(fig21, use_container_width=True)
+
+		#############
+
+
+		# Create an empty dictionary to store the initial product budget
+		initial_product_budget = {}
+
+		# Define the product names
+		products = ['Product1', 'Product2', 'Product3']
+
+
+		initial_product_budget['Product1']=0.15*initial_company_budget
+		initial_product_budget['Product2']=0.6*initial_company_budget
+		initial_product_budget['Product3']=0.25*initial_company_budget
+
+
+		# Create an empty dictionary to store the New product budget
+		new_product_budget = {}
+
+		# Define the product names
+		products = ['Product1', 'Product2', 'Product3']
+
+		# Create input fields for each product's budget
+		for product in products:
+		    budget = initial_product_budget[str(product)]*growth_rate
+		    if budget:
+		        new_product_budget[product] = budget
+
+		#initial_product_budget
+		data22 = {
+	    'Products': list(initial_product_budget.keys()) +list(new_product_budget.keys()),
+	    'Allocations': list(initial_product_budget.values()) + list(new_product_budget.values()),
+	    'BudgetType': ['Initial'] * len(initial_product_budget) + ['New'] * len(new_product_budget)
+		}
+
+		df22 = pd.DataFrame(data22)
+
+		# Create a bar graph using Plotly Express
+		fig22 = px.bar(df22, x='Products', y='Allocations', color='BudgetType',title='Product Budget Allocation')
+
+		# Streamlit app
+		st.title('Updated Product Budget Allocation')
+		st.plotly_chart(fig22, use_container_width=True) 
+
+
+
+
+		company_expenses = sum(company_expenses.values())
+		product_expenses = {product: 0 for product in initial_product_budget}
+
+		# Function to check if spending is as per the budget
+		def is_spending_within_budget(company_budget, product_budgets, company_expenses, product_expenses):
+		    total_company_expenses = sum(product_expenses.values()) + company_expenses
+		    return total_company_expenses <= company_budget
+
+		# Function to calculate and track variances from the last budget forecast
+		def calculate_variance(revenues, last_forecast):
+		    return revenues - last_forecast
+
+		# # Check if spending is within the company and product budgets
+		# if is_spending_within_budget(initial_company_budget, initial_product_budget, company_expenses, product_expenses):
+		#     st.write("Spending is within the budget.")
+		# else:
+		#     st.write("Spending exceeds the budget.")
+
+		# Calculate and track variances
+		variance = calculate_variance(revenues, last_budget_forecast)
+
+
+
+
+		# Check if the budget still holds good if revenues are showing a dip
+		# if variance < 0:
+		#     st.write("Revenues are showing a dip. Budget may need adjustment.")
+		# else:
+		#     st.write("Budget holds good even with current revenues.")
+
+
+
+		# Function to allocate new budgets based on current revenues
+		def allocate_budget_based_on_revenues(initial_budget, current_revenues):
+		   return initial_budget+abs(initial_budget-current_revenues)* growth_rate  # Adjust budget based on a percentage (e.g., 10%)
+
+
+
+		# Example: Allocate new budgets based on current revenues
+		new_company_budget2 = allocate_budget_based_on_revenues(initial_company_budget, revenues)
+		
+
+		data23 = {
+	    'Category': ['Expected| Company Budget','Updated| Company Budget Allocation'],
+	    'Allocations': [i1, finance_updated_budget]
+		}
+
+		df23 = pd.DataFrame(data23)
+
+		# Create a bar graph using Plotly Express
+		fig23 = px.bar(df23, x='Category', y='Allocations', title='Budget Allocation')
+
+		# Streamlit app
+		st.title('Updated Budget Allocation')
+		st.plotly_chart(fig23, use_container_width=True)    
+
+		################################################
+
+	 
 
 
 
@@ -507,70 +792,70 @@ def budget_planning():
 	print(f"New Product Budget Allocations: {new_product_budgets}")
 
 
-# def Assistant():
-# 	import os
+def Assistant():
+	import os
 
-# 	os.environ['OPENAI_API_KEY'] = "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"
+	os.environ['OPENAI_API_KEY'] = "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"
 
-# 	# OPENAI_API_KEY="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"
+	# OPENAI_API_KEY="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"
 
 
-# 	user_api_key = "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"
+	user_api_key = "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"
 
-# 	uploaded_file = st.sidebar.file_uploader("upload", type="csv")
+	uploaded_file = st.sidebar.file_uploader("upload", type="csv")
 
-# 	if uploaded_file :
-# 		with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-# 		  tmp_file.write(uploaded_file.getvalue())
-# 		  tmp_file_path = tmp_file.name
+	if uploaded_file :
+		with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+		  tmp_file.write(uploaded_file.getvalue())
+		  tmp_file_path = tmp_file.name
 
-# 		loader = CSVLoader(file_path=tmp_file_path, encoding="utf-8")
-# 		data = loader.load()
+		loader = CSVLoader(file_path=tmp_file_path, encoding="utf-8")
+		data = loader.load()
 
-# 		embeddings = OpenAIEmbeddings()
-# 		vectors = FAISS.from_documents(data, embeddings)
+		embeddings = OpenAIEmbeddings()
+		vectors = FAISS.from_documents(data, embeddings)
 
-# 		chain = ConversationalRetrievalChain.from_llm(llm = ChatOpenAI(temperature=0.0,model_name='gpt-3.5-turbo', openai_api_key="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"),
-# 		                                                                retriever=vectors.as_retriever())
+		chain = ConversationalRetrievalChain.from_llm(llm = ChatOpenAI(temperature=0.0,model_name='gpt-3.5-turbo', openai_api_key="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"),
+		                                                                retriever=vectors.as_retriever())
 
-# 		def conversational_chat(query):
+		def conversational_chat(query):
 		  
-# 		  result = chain({"question": query, "chat_history": st.session_state['history']})
-# 		  st.session_state['history'].append((query, result["answer"]))
+		  result = chain({"question": query, "chat_history": st.session_state['history']})
+		  st.session_state['history'].append((query, result["answer"]))
 		  
-# 		  return result["answer"]
+		  return result["answer"]
 
-# 		if 'history' not in st.session_state:
-# 		  st.session_state['history'] = []
+		if 'history' not in st.session_state:
+		  st.session_state['history'] = []
 
-# 		if 'generated' not in st.session_state:
-# 		  st.session_state['generated'] = ["Hello ! Ask me anything about " + uploaded_file.name + " 🤗"]
+		if 'generated' not in st.session_state:
+		  st.session_state['generated'] = ["Hello ! Ask me anything about " + uploaded_file.name + " 🤗"]
 
-# 		if 'past' not in st.session_state:
-# 		  st.session_state['past'] = ["Hey ! 👋"]
+		if 'past' not in st.session_state:
+		  st.session_state['past'] = ["Hey ! 👋"]
 		  
-# 		#container for the chat history
-# 		response_container = st.container()
-# 		#container for the user's text input
-# 		container = st.container()
+		#container for the chat history
+		response_container = st.container()
+		#container for the user's text input
+		container = st.container()
 
-# 		with container:
-# 		  with st.form(key='my_form', clear_on_submit=True):
+		with container:
+		  with st.form(key='my_form', clear_on_submit=True):
 		      
-# 		      user_input = st.text_input("Query:", placeholder="Talk about your csv data here (:", key='input')
-# 		      submit_button = st.form_submit_button(label='Send')
+		      user_input = st.text_input("Query:", placeholder="Talk about your csv data here (:", key='input')
+		      submit_button = st.form_submit_button(label='Send')
 		      
-# 		  if submit_button and user_input:
-# 		      output = conversational_chat(user_input)
+		  if submit_button and user_input:
+		      output = conversational_chat(user_input)
 		      
-# 		      st.session_state['past'].append(user_input)
-# 		      st.session_state['generated'].append(output)
+		      st.session_state['past'].append(user_input)
+		      st.session_state['generated'].append(output)
 
-# 		if st.session_state['generated']:
-# 		  with response_container:
-# 		      for i in range(len(st.session_state['generated'])):
-# 		          message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
-# 		          message(st.session_state["generated"][i], key=str(i), avatar_style="thumbs")
+		if st.session_state['generated']:
+		  with response_container:
+		      for i in range(len(st.session_state['generated'])):
+		          message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
+		          message(st.session_state["generated"][i], key=str(i), avatar_style="thumbs")
 
 
 
@@ -1002,7 +1287,7 @@ def sideBar():
  with st.sidebar:
     selected=option_menu(
         menu_title="Main Menu",
-        options=["Home","Predictions","Plot a Feature","Compare Two Durations of a Feature","Forecast a Feature", "Budget Planning","Recommendations"],
+        options=["Home","Predictions","Plot a Feature","Compare Two Durations of a Feature","Forecast a Feature", "Budget Planning","Recommendations","Assistant"],
         icons=["house"],
         menu_icon="cast",
         default_index=0
