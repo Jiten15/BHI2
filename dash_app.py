@@ -392,7 +392,7 @@ def qqt():
 	    st.subheader(f"New Customer {i + 1}")
 	    customer_id = st.text_input(f"Enter Customer ID for Customer {i + 1}:")
 	    revenue = st.number_input(f"Enter Revenue for Customer {i + 1}:", min_value=0)
-	    new_customers.append({'customer_id': customer_id, 'sku': sku, 'revenue': revenue})
+	    new_customers.append({'customer_id': customer_id, 'revenue': revenue})
 
 	# Calculate additional revenue from new customers
 	additional_revenue = 0
