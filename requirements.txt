@@ -32,7 +32,7 @@ streamlit_chat
 datetime
 python-dateutil
 streamlit_chat
-pycopy-tempfile
+temp
 transformers
 spacy
 speech_recognition
