@@ -36,4 +36,3 @@ temp
 transformers
 spacy
 SpeechRecognition
-calendar
