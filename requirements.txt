@@ -29,3 +29,11 @@ scikit-learn
 surprise
 langchain
 streamlit_chat
+datetime
+dateutil
+streamlit_chat
+tempfile
+transformers
+spacy
+speech_recognition
+calendar
