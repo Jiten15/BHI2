@@ -24,7 +24,7 @@ from sklearn.metrics import r2_score
 import numpy as np
 from datetime import date
 
-
+from dateutil import parser
 from streamlit_chat import message
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
@@ -33,7 +33,21 @@ from langchain.document_loaders.csv_loader import CSVLoader
 from langchain.vectorstores import FAISS
 import tempfile
 from surprise import Dataset, Reader, SVD
-# export OPENAI_API_KEY="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"
+
+import transformers
+import spacy
+import re
+
+
+import streamlit as st
+import pandas as pd
+import streamlit.components.v1 as components
+
+import speech_recognition as sr
+from datetime import datetime, timedelta
+import calendar
+
+
 
 
 st.set_page_config(page_title="Dashboard",page_icon="🌍",layout="wide")
@@ -58,8 +72,492 @@ df['year'] = pd.to_datetime(df['Invoice Date']).dt.year
 df['month'] = pd.to_datetime(df['Invoice Date']).dt.month
 df['day'] = pd.to_datetime(df['Invoice Date']).dt.day
 
-# df3= df[['Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin']]
 
+def assistant():
+
+	# Create a Streamlit app
+	st.title("Chatbot")
+
+	# Create a function to convert speech to text
+	def speech_to_text():
+	    recognizer = sr.Recognizer()
+	    microphone = sr.Microphone()
+
+	    with microphone as source:
+	        st.write("Please speak...")
+	        recognizer.adjust_for_ambient_noise(source)
+	        audio = recognizer.listen(source)
+	        st.write("Recording complete.")
+
+	    try:
+	        text = recognizer.recognize_google(audio)
+	        st.success("Text: " + text)
+	    except sr.UnknownValueError:
+	        st.error("Could not understand the audio.")
+	    except sr.RequestError as e:
+	        st.error("Could not request results; {0}".format(e))
+	    return str(text)    
+
+	
+
+	# Load spaCy for natural language understanding
+	nlp = spacy.load("en_core_web_sm")
+
+	# Define regular expressions for matching different components
+	column_pattern = r'(total sales|price per unit|units sold|operating profit|operating margin)'
+	date_pattern = r'\d{4}-\d{2}-\d{2}'
+	time_period_pattern = r'(monthly|quarterly|yearly|daily)'
+
+	def extract_info(user_message):
+	    # Initialize variables with default values
+	    selected_columns = None
+	    start_date = None
+	    end_date = None
+	    time_period = None
+
+	    # Convert the user's input to lowercase to make it case-insensitive
+	    user_message = user_message.lower()
+
+	    # Find all occurrences of selected columns
+	    selected_columns = re.findall(column_pattern, user_message)
+
+	    # Find start date and end date
+	    dates = re.findall(date_pattern, user_message)
+	    if len(dates) >= 2:
+	        start_date = datetime.strptime(dates[0], '%Y-%m-%d').date()
+	        end_date = datetime.strptime(dates[1], '%Y-%m-%d').date()
+
+	    # Find all occurrences of time period
+	    time_periods = re.findall(time_period_pattern, user_message)
+
+	    # Check if selected_columns is a list, and join them into a single string
+	    if selected_columns:
+	        selected_columns = ' '.join(selected_columns)
+
+	    # Check if time_periods is a list, and join them into a single string
+	    if time_periods:
+	        time_period = ' '.join(time_periods)
+
+	    return selected_columns, start_date, end_date, time_period
+
+	user_id_pattern = r'user (\d{3})'
+	no_of_recom_pattern = r'list of (\d+) product recommendations'
+
+	def user_id_extract_info(user_message):
+	    user_id = None
+	    no_of_recom = None
+
+	    # Convert the user's input to lowercase to make it case-insensitive
+	    user_message = user_message.lower()
+
+	    # Find user_id values
+	    user_id_values = re.findall(user_id_pattern, user_message)
+	    if user_id_values:
+	        user_id = int(user_id_values[0])
+
+	    # Find no_of_recom values
+	    no_of_recom_values = re.findall(no_of_recom_pattern, user_message)
+	    if no_of_recom_values:
+	        no_of_recom = int(no_of_recom_values[0])
+
+	    return user_id, no_of_recom
+
+	def date_extract(text):
+		parsed_dates = parser.parse(text, fuzzy=True, dayfirst=True)
+		parsed_dates = [date for date in parsed_dates if date.year]
+		if len(parsed_dates) >= 2:
+			parsed_dates.sort()
+			start_date = parsed_dates[0].strftime('%Y-%m-%d')
+			end_date = parsed_dates[-1].strftime('%Y-%m-%d')
+		return start_date,end_date
+
+
+	def date_extraction_from_audio(input_text):
+	    month_mapping = {
+	    'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+	    'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+	    }
+
+	    # Regular expression to match month-year pattern
+	    pattern = r'(\w{3,}) (\d{4})'
+
+	    # Search for month-year matches in the input text
+	    matches = re.findall(pattern, input_text.lower())
+
+	    # Function to get the date as a datetime object from the matched month-year pair
+	    def get_date(month, year):
+	        month_number = month_mapping.get(month[:3], 1)  # Default to January if month is not found
+	        return datetime(int(year), month_number, 1)
+
+	    # Initialize start_date and end_date
+	    start_date = end_date = None
+
+	    # Process the matches to extract start_date and end_date
+	    if len(matches) >= 2:
+	        date1 = get_date(matches[0][0], matches[0][1])
+	        date2 = get_date(matches[1][0], matches[1][1])
+	        
+	        # Compare the dates and determine start_date and end_date
+	        if date1 < date2:
+	            start_date = date1
+	            end_date = date2
+	        else:
+	            start_date = date2
+	            end_date = date1
+
+	    # Convert end_date to the last day of the month
+	    if end_date:
+	        year, month, last_day = end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1]
+	        end_date = datetime(year, month, last_day)
+
+	    return start_date,end_date
+
+
+	def extract_growth_rate(input_text):
+	    pattern = r'(\d+(?:\.\d+)?)\s*%'
+	    match = re.search(pattern, input_text)
+	    growth_rate = None
+	    if match:
+	        growth_rate = float(match.group(1))
+
+	    return growth_rate
+
+
+	# Chat interface
+	# Create a button to trigger speech recognition
+	if st.button("Start Recording"):
+	    
+	   user_message = speech_to_text()
+
+	else :
+		st.write("Chat with the bot:")
+		user_message = st.text_input("You: ")
+
+	if user_message:
+		# Process user input with spaCy for intent recognition
+		doc = nlp(user_message)
+		# st.write(doc)
+		intent = None
+
+		# Recognize intents related to different sections
+		for token in doc:
+		  if token.dep_ == "dative" and token.head.lemma_ == "call":
+		      intent = "call_function"
+		      break
+		  elif "plot" in user_message.lower():
+		      intent = "plot"
+		      break
+		  elif "compare" in user_message.lower() and "duration" in user_message.lower():
+		      intent = "compare_duration"
+		      break
+		  elif "forecast" in user_message.lower():
+		      intent = "forecast"
+		      break
+		  elif "growth rate" in user_message.lower():
+		      intent = "growth rate"
+		      break
+		  elif "recommendations" in user_message.lower():
+		      intent = "recommendations"
+		      break
+
+		# Generate a chatbot response based on the recognized intent
+		if intent == "call_function":
+			st.write("Calling a function... (replace this with your function call code)")
+			response = "Function called successfully."
+
+		# Plot
+		elif intent == "plot":
+			# response = "Sure, let's go to the Plotting section."
+			selected_column, start_date, end_date, time_period = extract_info(user_message)
+
+			# st.write(f"{selected_column}, {start_date}, {end_date}, {time_period}")
+			if start_date is None :
+
+				start_date, end_date = date_extraction_from_audio(user_message)
+
+				if start_date is None:
+					st.write("sorry! could not get the date. Would you please select it from below options")
+					start_date = st.date_input("Select a Start Date")
+					end_date = st.date_input("Select an End Date")
+				
+				
+
+			if start_date and end_date is not None:
+
+				df_new = df.groupby('Invoice Date').agg({
+				'Price per Unit': 'sum',
+			 	'Units Sold': 'sum',
+			 	'Total Sales': 'sum',
+			 	'Operating Profit': 'sum',
+			 	'Operating Margin': 'mean'}).reset_index()
+
+
+				df_new['Invoice Date'] = pd.to_datetime(df_new['Invoice Date'])
+
+
+				start_date = datetime.combine(start_date, datetime.min.time())
+				end_date = datetime.combine(end_date, datetime.max.time())
+
+				if time_period == "monthly":
+					dates = pd.date_range(start=start_date,end=end_date,freq="MS")
+
+				elif time_period == "quarterly":
+					dates = pd.date_range(start=start_date,end=end_date,freq="QS")
+				elif time_period == "yearly":
+					dates = pd.date_range(start=start_date,end=end_date,freq="Y")
+				elif time_period == "daily":
+					dates = pd.date_range(start=start_date,end=end_date,freq="D")
+
+				filtered_df=df_new[df_new['Invoice Date'].isin(dates)]
+
+				def plot(x1,y1):
+					trace1 = go.Scatter(x=x1,y=y1, mode='lines+markers', name='Actual')
+					layout = go.Layout(title="Actual")
+					fig = go.Figure(data=[trace1], layout=layout)
+					st.plotly_chart(fig)
+
+				plot(filtered_df['Invoice Date'],filtered_df[selected_column.title()])
+
+		# Compare Plots
+		elif intent == "compare_duration":
+			response = "Okay, let's compare durations."
+		
+		# Forecast
+		elif intent == "forecast":
+			# response = "Great, let's do some forecasting."
+			selected_column, start_date, end_date, frequency = extract_info(user_message)
+
+			if start_date is None :
+
+				start_date, end_date = date_extraction_from_audio(user_message)
+
+				if start_date is None:
+					st.write("sorry! could not get the date. Would you please select it from below options Or try again")
+					start_date = st.date_input("Select a Start Date")
+					end_date = st.date_input("Select an End Date")
+				
+				
+
+			if start_date != end_date:
+
+				df['Date'] = pd.to_datetime(df['Invoice Date'])
+
+				df2= df[['Date','Total Sales']]
+				df2 = df2.groupby('Date')[['Total Sales']].sum().reset_index()
+
+				df2.set_index('Date', inplace=True)
+
+				model=sm.tsa.statespace.SARIMAX(df2['Total Sales'],order=(1, 1, 1),seasonal_order=(1,1,1,12))
+				results=model.fit()
+				
+
+				if frequency=="monthly":
+				    frequency='MS'
+				elif frequency=="quarterly":
+				    frequency='QS'
+				elif frequency=="yearly":
+				    frequency='Y'
+				elif frequency=="daily":
+				    frequency='D'    
+				    
+				index_future_dates=pd.date_range(start=start_date,end=end_date,freq=frequency)
+				#print(index_future_dates
+				C=len(index_future_dates)
+				pred=results.predict(start=len(df2),end=len(df2)+C-1,typ='levels').rename('ARIMA Predictions')
+				#print(comp_pred)
+				pred.index=index_future_dates
+				# print(pred)
+
+				fig = go.Figure()
+
+				fig.add_trace(go.Scatter(x=pred.index, y=pred, mode='lines', name='Forecast Sales'))
+
+				# Update the layout of the plot
+				fig.update_layout(title='Forecasted Sales ',
+				                  xaxis_title='Date',
+				                  yaxis_title='Total Sales')
+
+				# Show the plot
+				st.plotly_chart(fig)
+
+
+		# Budget Planning
+		elif intent == "growth rate":
+
+				df['Date'] = pd.to_datetime(df['Invoice Date'])
+				df2 = df[['Date', 'Total Sales']]
+				df2 = df2.groupby('Date')[['Total Sales']].sum().reset_index()
+				df2.set_index('Date', inplace=True)
+				model = sm.tsa.statespace.SARIMAX(df2['Total Sales'], order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
+				results = model.fit()
+				frequency = 'D'
+				index_future_dates = pd.date_range(start="2020-01-01", end="2021-04-02", freq=frequency)
+				C = len(index_future_dates)
+				pred = results.predict(start=len(df2), end=len(df2) + C - 1, typ='levels').rename('ARIMA Predictions')
+				pred.index = index_future_dates
+				x = pred.index
+				y = pred
+				data1 = pd.DataFrame({'Date': x, 'Forecast': y})
+				data1['Date'] = pd.to_datetime(data1['Date'])
+				last_date = "2021-04-02"
+				last_quarter_start = pd.Timestamp(year=2021, month=1 + 1, day=1)
+				last_quarter_data = data1[(data1['Date'] >= last_quarter_start) & (data1['Date'] <= last_date)]
+				total_last_quarter_forecast = np.sum(last_quarter_data['Forecast'])
+				initial_company_budget = 90000000
+				i1=initial_company_budget
+
+				#input 1
+				growth_rate = extract_growth_rate(user_message)
+				st.write(growth_rate)
+
+
+				quarterly_sales = df2.resample('Q')['Total Sales'].sum()
+				last_quarter_sales = quarterly_sales.iloc[-1]
+				revenues = last_quarter_sales  # Example initial revenue
+				last_budget_forecast = total_last_quarter_forecast  # Example last budget forecast
+				company_expenses = {}
+				expense_categories = ['Salaries', 'Utilities', 'Rent', 'Marketing', 'Supplies', 'Other']
+				company_expenses['Salaries'] = initial_company_budget*0.4
+				company_expenses['Utilities'] = initial_company_budget*0.1
+				company_expenses['Rent'] = initial_company_budget*0.15
+				company_expenses['Marketing'] = initial_company_budget*0.2
+				company_expenses['Supplies'] = initial_company_budget*0.1
+				company_expenses['Other'] = initial_company_budget*0.05
+
+				data = {
+			    'Category': expense_categories,
+			    'Expense': list(company_expenses.values())
+				}
+
+				df11 = pd.DataFrame(data)
+				fig = px.bar(df11, x='Category', y='Expense', title='Company Expenses')
+				# st.title('Company Expenses')
+				# st.plotly_chart(fig, use_container_width=True)
+
+				#############
+				initial_product_budget = {}
+				products = ['Product1', 'Product2', 'Product3']
+				initial_product_budget['Product1']=0.15*initial_company_budget
+				initial_product_budget['Product2']=0.6*initial_company_budget
+				initial_product_budget['Product3']=0.25*initial_company_budget
+				new_product_budget = {}
+				products = ['Product1', 'Product2', 'Product3']
+				for product in products:
+				    budget = float(initial_product_budget[str(product)]*growth_rate*0.01)
+				    if budget:
+				        new_product_budget[product] = budget
+				data13 = {
+			    'Products': list(initial_product_budget.keys()) +list(new_product_budget.keys()),
+			    'Allocations': list(initial_product_budget.values()) + list(new_product_budget.values()),
+			    'BudgetType': ['Initial'] * len(initial_product_budget) + ['New'] * len(new_product_budget)
+				}
+				df13 = pd.DataFrame(data13)
+				fig13 = px.bar(df13, x='Products', y='Allocations', color='BudgetType',title='Product Budget Allocation')
+				st.title('Product Budget Allocation')
+				st.plotly_chart(fig13, use_container_width=True) 
+				company_expenses = sum(company_expenses.values())
+				product_expenses = {product: 0 for product in initial_product_budget}
+
+				# Function to check if spending is as per the budget
+				def is_spending_within_budget(company_budget, product_budgets, company_expenses, product_expenses):
+				    total_company_expenses = sum(product_expenses.values()) + company_expenses
+				    return total_company_expenses <= company_budget
+
+				# Function to calculate and track variances from the last budget forecast
+				def calculate_variance(revenues, last_forecast):
+				    return revenues - last_forecast
+
+				# Check if spending is within the company and product budgets
+				if is_spending_within_budget(initial_company_budget, initial_product_budget, company_expenses, product_expenses):
+				    st.write("Spending is within the budget.")
+				else:
+				    st.write("Spending exceeds the budget.")
+
+				# Calculate and track variances
+				variance = calculate_variance(revenues, last_budget_forecast)
+				if variance < 0:
+				    st.write("Revenues are showing a dip. Budget may need adjustment.")
+				else:
+				    st.write("Budget holds good even with current revenues.")
+
+				# Function to allocate new budgets based on current revenues
+				def allocate_budget_based_on_revenues(initial_budget, current_revenues):
+				   return float(initial_budget+abs(initial_budget-current_revenues)* growth_rate*0.01)  # Adjust budget based on a percentage (e.g., 10%)
+
+				def allocate_product_budget_based_on_revenues(budget, revenues):
+					return float(budget+abs(budget-revenues)* growth_rate*0.01)
+
+				new_company_budget = allocate_budget_based_on_revenues(initial_company_budget, revenues)
+				new_product_budgets = {product: allocate_product_budget_based_on_revenues(budget, revenues) for product, budget in initial_product_budget.items()}
+
+				data12 = {
+			    'Category': ['Recent| Company Budget','New| Company Budget Allocation'],
+			    'Allocations': [initial_company_budget, new_company_budget]
+				}
+
+				df12 = pd.DataFrame(data12)
+				fig12 = px.bar(df12, x='Category', y='Allocations', title='Budget Allocation')
+				st.title('Budget Allocation')
+				st.plotly_chart(fig12, use_container_width=True)    
+
+				################################################
+
+				
+				######################
+				
+
+
+		################ recommendations | bot ##########################
+		elif intent == "recommendations":
+			# response = "Certainly, let's explore recommendations."
+			# Sample sales data
+			user_id, no_of_recom=user_id_extract_info(user_message)
+			# st.write(f"{user_id},{no_of_recom}")
+
+			data = {
+			    'user_id': [101, 102, 103, 104, 105, 106, 107, 108, 109],
+			    'product_id': [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009],
+			    'rating': [5, 4, 2, 3, 1, 5, 4, 5, 3]
+			}
+
+			# Create a Surprise Reader object specifying the rating scale
+			reader = Reader(rating_scale=(1, 5))  # Assuming ratings range from 1 to 5
+
+			# Load the data into a Surprise Dataset
+			data_surprise = Dataset.load_from_df(pd.DataFrame(data), reader)
+
+			# Split the data into training and testing sets
+			trainset = data_surprise.build_full_trainset()
+
+			# Train the SVD (Singular Value Decomposition) algorithm
+			model = SVD()
+			model.fit(trainset)
+
+
+			# user_id = 101  # Replace with the actual user ID
+			products_rated_by_user = [product_id for user, product_id, rating in zip(data['user_id'], data['product_id'], data['rating']) if user == user_id]
+			products_to_exclude = set(products_rated_by_user)
+
+			# Generate recommendations for the user
+			recommendations = []
+			for product_id in data['product_id']:  # Assuming product IDs range from 1 to 5
+			    if product_id not in products_to_exclude:
+			        predicted_rating = model.predict(user_id, product_id).est
+			        recommendations.append((product_id, predicted_rating))
+
+			# Sort the recommendations by predicted rating in descending order
+			recommendations.sort(key=lambda x: x[1], reverse=True)
+
+			# Get the top N recommended product IDs (e.g., top 3)
+			top_n_recommendations = [product_id for product_id, _ in recommendations[:5]]
+
+			# Add your code to navigate to the Recommendations section
+			st.write(f"products recommendations for user id {user_id} are : {top_n_recommendations}")
+
+		else:
+			st.write("Sorry! not able to get you please try again.")
+
+		
 
 def recommendations():
 
@@ -606,260 +1104,6 @@ def qqt():
 
 
 
-def budget_planning():
-
-
-	st.title("Budget Planning")
-
-	df['Date'] = pd.to_datetime(df['Invoice Date'])
-
-	df2= df[['Date', 'Total Sales']]
-	df2 = df2.groupby('Date')[['Total Sales']].sum().reset_index()
-
-	df2.set_index('Date', inplace=True)
-
-	model=sm.tsa.statespace.SARIMAX(df2['Total Sales'],order=(1, 1, 1),seasonal_order=(1,1,1,12))
-	results=model.fit()
-	
-
-	
-	frequency='D'
-	   
-	    
-
-	today = date.today()
-
-	index_future_dates=pd.date_range(start="2020-01-01",end=today,freq=frequency)
-	#print(index_future_dates
-	C=len(index_future_dates)
-	pred=results.predict(start=len(df2),end=len(df2)+C-1,typ='levels').rename('ARIMA Predictions')
-	#print(comp_pred)
-	pred.index=index_future_dates
-	# print(pred)
-
-	
-	x=pred.index 
-	y=pred
-
-
-	# Create a DataFrame from your data
-	data1 = pd.DataFrame({'Date': x, 'Forecast': y})
-
-	# Convert the 'Date' column to a datetime data type
-	data1['Date'] = pd.to_datetime(data1['Date'])
-
-	# Determine the last date in the data
-	last_date = data1['Date'].max()
-
-	# Calculate the first date of the last quarter
-	last_quarter_start = pd.Timestamp(year=last_date.year, 
-	                                  month=(last_date.month - 2) % 12 + 1, 
-	                                  day=1)
-
-	# Filter the data for the last quarter
-	last_quarter_data = data1[(data1['Date'] >= last_quarter_start) & (data1['Date'] <= last_date)]
-
-	# Calculate the total forecast value for the last quarter
-	total_last_quarter_forecast = np.sum(last_quarter_data['Forecast'])
-
-	# Print the total forecast value for the last quarter
-	print(f"Total Forecast Value for the Last Quarter: {total_last_quarter_forecast}")
-
-	
-
-	############################################
-	# df2['Date'] = pd.to_datetime(df2['Date'])
-
-	# Set the 'Date' column as the index of the DataFrame
-	# df2.set_index('Date', inplace=True)
-
-	# Resample the data by quarters and sum the sales for each quarter
-	quarterly_sales = df.resample('Q')['Total Sales'].sum()
-
-	# Get the total sales for the second-to-last quarter and the last quarter
-	last_quarter_sales = quarterly_sales.iloc[-1]
-	# second_last_quarter_sales = quarterly_sales.iloc[-2]
-
-	# df2['Date'] = pd.to_datetime(df['Date'])
-	# df2['Quarter'] = df2['Date'].dt.to_period('Q')
-	# quarterly_sales = df2.groupby('Quarter')['Total Sales'].sum()
-
-	# Step 2: Extract the sales for the second-to-last quarter and the last quarter.
-	# quarters = quarterly_sales.index.to_period('Q').tolist()
-	# second_last_quarter_sales = quarterly_sales[quarters[-2]]
-	# last_quarter_sales = quarterly_sales[quarters[-1]]
-
-	# Initial budgeting and financial data
-	initial_budget = st.number_input("Enter the Last Budget of Company:", min_value=0.0)
-
-	# Display the entered budget
-	st.write(f"You entered an initial budget of ${initial_budget:.2f}")
-
-  # Example initial company budget
-	# Title for the Streamlit app
-	st.title("Product Budget Calculator")
-
-	# Create an empty dictionary to store the initial product budget
-	initial_product_budget = {}
-
-	# Define the product names
-	products = ['Product1', 'Product2', 'Product3']
-
-	# Create input fields for each product's budget
-	for product in products:
-	    budget = st.text_input(f"Enter the initial budget for {product}:", key=product)
-	    if budget:
-	        initial_product_budget[product] = float(budget)
-
-	# Display the entered product budgets
-	if initial_product_budget:
-	    st.write("Initial Product Budgets:")
-	    for product, budget in initial_product_budget.items():
-	        st.write(f"{product}: ${budget:.2f}") # Example initial product budgets
-
-
-	revenues = last_quarter_sales  # Example initial revenue
-	last_budget_forecast = total_last_quarter_forecast  # Example last budget forecast
-
-	# Calculate and track expenses for the company and products
-
-	# Title for the Streamlit app
-	st.title("Company Expense Tracker")
-
-	# Create an empty dictionary to store company expenses
-	company_expenses = {}
-
-	# Define expense categories and ask users to input expenses
-	expense_categories = ['Salaries', 'Utilities', 'Rent', 'Marketing', 'Supplies', 'Other']
-
-	for category in expense_categories:
-	    expense_amount = st.number_input(f"Enter the expense for {category}:", key=category)
-	    if expense_amount:
-	        company_expenses[category] = expense_amount
-
-	# Display the entered company expenses
-	if company_expenses:
-	    st.write("Company Expenses:")
-	    for category, amount in company_expenses.items():
-	        st.write(f"{category}: ${amount:.2f}")
-
-
-
-	# company_expenses = 0
-	product_expenses = {product: 0 for product in initial_product_budget}
-
-	# Function to check if spending is as per the budget
-	def is_spending_within_budget(company_budget, product_budgets, company_expenses, product_expenses):
-	    total_company_expenses = sum(product_expenses.values()) + company_expenses
-	    return total_company_expenses <= company_budget
-
-	# Function to calculate and track variances from the last budget forecast
-	def calculate_variance(revenues, last_forecast):
-	    return revenues - last_forecast
-
-	# Check if spending is within the company and product budgets
-	if is_spending_within_budget(initial_company_budget, initial_product_budget, company_expenses, product_expenses):
-	    print("Spending is within the budget.")
-	else:
-	    print("Spending exceeds the budget.")
-
-	# Calculate and track variances
-	variance = calculate_variance(revenues, last_budget_forecast)
-
-	# Print budget-related information
-	print(f"Initial Company Budget: {initial_company_budget}")
-	print(f"Initial Product Budgets: {initial_product_budget}")
-	print(f"Revenues: {revenues}")
-	print(f"Last Budget Forecast: {last_budget_forecast}")
-	print(f"Variance from Last Budget Forecast: {variance}")
-
-	# Check if the budget still holds good if revenues are showing a dip
-	if variance < 0:
-	    print("Revenues are showing a dip. Budget may need adjustment.")
-	else:
-	    print("Budget holds good even with current revenues.")
-
-	# Function to allocate new budgets based on current revenues
-	def allocate_budget_based_on_revenues(initial_budget, current_revenues):
-	    return initial_budget - (initial_budget - current_revenues) * 0.2  # Adjust budget based on a percentage (e.g., 20%)
-
-	# Example: Allocate new budgets based on current revenues
-	new_company_budget = allocate_budget_based_on_revenues(initial_company_budget, revenues)
-	new_product_budgets = {product: allocate_budget_based_on_revenues(budget, revenues) for product, budget in initial_product_budget.items()}
-
-	# Print new budget allocations
-	print(f"New Company Budget Allocation: {new_company_budget}")
-	print(f"New Product Budget Allocations: {new_product_budgets}")
-
-
-def Assistant():
-	import os
-
-	os.environ['OPENAI_API_KEY'] = "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"
-
-	# OPENAI_API_KEY="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"
-
-
-	user_api_key = "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"
-
-	uploaded_file = st.sidebar.file_uploader("upload", type="csv")
-
-	if uploaded_file :
-		with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-		  tmp_file.write(uploaded_file.getvalue())
-		  tmp_file_path = tmp_file.name
-
-		loader = CSVLoader(file_path=tmp_file_path, encoding="utf-8")
-		data = loader.load()
-
-		embeddings = OpenAIEmbeddings()
-		vectors = FAISS.from_documents(data, embeddings)
-
-		chain = ConversationalRetrievalChain.from_llm(llm = ChatOpenAI(temperature=0.0,model_name='gpt-3.5-turbo', openai_api_key="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"),
-		                                                                retriever=vectors.as_retriever())
-
-		def conversational_chat(query):
-		  
-		  result = chain({"question": query, "chat_history": st.session_state['history']})
-		  st.session_state['history'].append((query, result["answer"]))
-		  
-		  return result["answer"]
-
-		if 'history' not in st.session_state:
-		  st.session_state['history'] = []
-
-		if 'generated' not in st.session_state:
-		  st.session_state['generated'] = ["Hello ! Ask me anything about " + uploaded_file.name + " 🤗"]
-
-		if 'past' not in st.session_state:
-		  st.session_state['past'] = ["Hey ! 👋"]
-		  
-		#container for the chat history
-		response_container = st.container()
-		#container for the user's text input
-		container = st.container()
-
-		with container:
-		  with st.form(key='my_form', clear_on_submit=True):
-		      
-		      user_input = st.text_input("Query:", placeholder="Talk about your csv data here (:", key='input')
-		      submit_button = st.form_submit_button(label='Send')
-		      
-		  if submit_button and user_input:
-		      output = conversational_chat(user_input)
-		      
-		      st.session_state['past'].append(user_input)
-		      st.session_state['generated'].append(output)
-
-		if st.session_state['generated']:
-		  with response_container:
-		      for i in range(len(st.session_state['generated'])):
-		          message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
-		          message(st.session_state["generated"][i], key=str(i), avatar_style="thumbs")
-
-
-
-
 
 
 
@@ -879,6 +1123,9 @@ def feature_1():
 
 	selected_column = st.sidebar.selectbox("Select a Feature:", ['Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin'])
 
+	st.title("Time Period Selector")
+
+	time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly","Daily"])
 
 
 	st.title("Date Range should be in between Jan,2020-Dec,2021")
@@ -897,9 +1144,7 @@ def feature_1():
 	  end_date = datetime.combine(end_date, datetime.max.time())
 	  
 
-	st.title("Time Period Selector")
-
-	time_period = st.sidebar.selectbox("Select a Time Period:", ["Monthly", "Quarterly", "Yearly","Daily"])
+	
 
 
 
@@ -935,6 +1180,15 @@ def feature_1():
 
 
 		plot(filtered_df['Invoice Date'],filtered_df[selected_column])
+
+
+
+
+
+
+
+
+
 
 
 def feature_2():
@@ -1319,7 +1573,9 @@ def sideBar():
  if selected=="Recommendations":
     st.subheader(f"Page: {selected}")
     recommendations()  
-
+ if selected=="Assistant":
+    st.subheader(f"Page: {selected}")
+    assistant()  
 
 sideBar()
 
