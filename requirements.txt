@@ -30,7 +30,7 @@ surprise
 langchain
 streamlit_chat
 datetime
-dateutil
+python-dateutil
 streamlit_chat
 tempfile
 transformers
