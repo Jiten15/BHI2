@@ -35,5 +35,5 @@ streamlit_chat
 temp
 transformers
 spacy
-speech_recognition
+SpeechRecognition
 calendar
