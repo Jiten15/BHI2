@@ -35,5 +35,4 @@ streamlit_chat
 temp
 transformers
 spacy
-en_core_web_sm
 SpeechRecognition
