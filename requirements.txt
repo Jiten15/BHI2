@@ -33,6 +33,7 @@ datetime
 python-dateutil
 streamlit_chat
 temp
+PyAudio
 transformers
 spacy
 SpeechRecognition
