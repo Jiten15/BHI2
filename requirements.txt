@@ -6,6 +6,10 @@ numerize==0.12
 numpy==1.23.5
 oauthlib==3.2.2
 openpyxl==3.1.2
+pyaudio-wheels
+pyproject-toml
+
+PyAudio
 opt-einsum==3.3.0
 packaging==23.1
 pandas==2.0.1
@@ -33,9 +37,7 @@ datetime
 python-dateutil
 streamlit_chat
 temp
-pyproject-toml
-pyaudio-wheels
-PyAudio
+
 transformers
 spacy
 SpeechRecognition
