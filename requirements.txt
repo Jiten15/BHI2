@@ -33,9 +33,10 @@ datetime
 python-dateutil
 streamlit_chat
 temp
+pyproject-toml
 pyaudio-wheels
 PyAudio
 transformers
 spacy
 SpeechRecognition
-pyproject-toml
+
