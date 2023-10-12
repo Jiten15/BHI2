@@ -7,7 +7,7 @@ numpy==1.23.5
 oauthlib==3.2.2
 openpyxl==3.1.2
 #portaudio19-dev
-portaudio
+#portaudio
 pyaudio-wheels
 pyproject-toml
 
