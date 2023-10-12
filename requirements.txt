@@ -26,7 +26,7 @@ seaborn==0.12.2
 pmdarima==1.8.2
 statsmodels==0.13.3
 surprise==0.1
-langchain==1.0.0
+#langchain==1.0.0
 streamlit_chat==1.0.0
 datetime==4.4
 python-dateutil==2.8.2
