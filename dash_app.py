@@ -264,6 +264,7 @@ def assistant():
 		elif intent == "plot":
 			# response = "Sure, let's go to the Plotting section."
 			selected_column, start_date, end_date, time_period = extract_info(user_message)
+			selected_column=selected_column.title()
 
 			# st.write(f"{selected_column}, {start_date}, {end_date}, {time_period}")
 			if start_date is None :
@@ -285,6 +286,7 @@ def assistant():
 			 	'Total Sales': 'sum',
 			 	'Operating Profit': 'sum',
 			 	'Operating Margin': 'mean'}).reset_index()
+				df_new['Price Per Unit']=df_new['Price per Unit']
 
 
 				df_new['Invoice Date'] = pd.to_datetime(df_new['Invoice Date'])
@@ -306,12 +308,12 @@ def assistant():
 				filtered_df=df_new[df_new['Invoice Date'].isin(dates)]
 
 				def plot(x1,y1):
-					trace1 = go.Scatter(x=x1,y=y1, mode='lines+markers', name='Actual')
-					layout = go.Layout(title="Actual")
+					trace1 = go.Scatter(x=x1,y=y1, mode='lines+markers', name=f'{time_period.title()}')
+					layout = go.Layout(title=f"{selected_column}")
 					fig = go.Figure(data=[trace1], layout=layout)
 					st.plotly_chart(fig)
 
-				plot(filtered_df['Invoice Date'],filtered_df[selected_column.title()])
+				plot(filtered_df['Invoice Date'],filtered_df[selected_column])
 
 			else:
 				st.write("Please try again. Not able to get you this time.")
@@ -325,7 +327,6 @@ def assistant():
 		elif intent == "forecast":
 			# response = "Great, let's do some forecasting."
 			selected_column, start_date, end_date, frequency = extract_info(user_message)
-			st.write(selected_column)
 
 			if start_date is None :
 
