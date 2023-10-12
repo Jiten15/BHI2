@@ -325,6 +325,7 @@ def assistant():
 		elif intent == "forecast":
 			# response = "Great, let's do some forecasting."
 			selected_column, start_date, end_date, frequency = extract_info(user_message)
+			st.write(selected_column)
 
 			if start_date is None :
 
