@@ -38,4 +38,4 @@ PyAudio
 transformers
 spacy
 SpeechRecognition
-
+pyproject-toml
