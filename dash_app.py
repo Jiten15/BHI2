@@ -5,7 +5,7 @@ from streamlit_option_menu import option_menu
 from numerize.numerize import numerize
 #from query import *
 import time
-import streamlit as st
+
 import pandas as pd
 from datetime import datetime
 import plotly.graph_objs as go
@@ -39,15 +39,14 @@ import spacy
 import re
 
 
-import streamlit as st
-import pandas as pd
 import streamlit.components.v1 as components
 
 import speech_recognition as sr
 from datetime import datetime, timedelta
 import calendar
 
-spacy.cli.download("en_core_web_sm")
+
+
 
 
 st.set_page_config(page_title="Dashboard",page_icon="🌍",layout="wide")
@@ -225,13 +224,9 @@ def assistant():
 
 	# Chat interface
 	# Create a button to trigger speech recognition
-	if st.button("Start Recording"):
-	    
-	   user_message = speech_to_text()
 
-	else :
-		st.write("Chat with the bot:")
-		user_message = st.text_input("You: ")
+	st.write("Chat with the bot:")
+	user_message = st.text_input("You: ")
 
 	if user_message:
 		# Process user input with spaCy for intent recognition
@@ -318,6 +313,10 @@ def assistant():
 
 				plot(filtered_df['Invoice Date'],filtered_df[selected_column.title()])
 
+			else:
+				st.write("Please try again. Not able to get you this time.")
+
+
 		# Compare Plots
 		elif intent == "compare_duration":
 			response = "Okay, let's compare durations."
@@ -342,12 +341,12 @@ def assistant():
 
 				df['Date'] = pd.to_datetime(df['Invoice Date'])
 
-				df2= df[['Date','Total Sales']]
-				df2 = df2.groupby('Date')[['Total Sales']].sum().reset_index()
+				df2= df[['Date','Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin']]
+				df2 = df2.groupby('Date')[['Total Sales','Price Per Unit','Nits Sold','Operating Profit','Operating Margin']].sum().reset_index()
 
 				df2.set_index('Date', inplace=True)
 
-				model=sm.tsa.statespace.SARIMAX(df2['Total Sales'],order=(1, 1, 1),seasonal_order=(1,1,1,12))
+				model=sm.tsa.statespace.SARIMAX(df2[selected_column],order=(1, 1, 1),seasonal_order=(1,1,1,12))
 				results=model.fit()
 				
 
@@ -373,9 +372,9 @@ def assistant():
 				fig.add_trace(go.Scatter(x=pred.index, y=pred, mode='lines', name='Forecast Sales'))
 
 				# Update the layout of the plot
-				fig.update_layout(title='Forecasted Sales ',
+				fig.update_layout(title=f'Forecasted {selected_column}',
 				                  xaxis_title='Date',
-				                  yaxis_title='Total Sales')
+				                  yaxis_title=f'{selected_column}')
 
 				# Show the plot
 				st.plotly_chart(fig)
