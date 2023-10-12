@@ -342,7 +342,7 @@ def assistant():
 				df['Date'] = pd.to_datetime(df['Invoice Date'])
 
 				df2= df[['Date','Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin']]
-				df2 = df2.groupby('Date')[['Total Sales','Price Per Unit','Units Sold','Operating Profit','Operating Margin']].sum().reset_index()
+				df2 = df2.groupby('Date')[[selected_column]].sum().reset_index()
 
 				df2.set_index('Date', inplace=True)
 
