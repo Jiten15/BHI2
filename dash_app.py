@@ -47,7 +47,7 @@ import speech_recognition as sr
 from datetime import datetime, timedelta
 import calendar
 
-import en_core_web_sm
+spacy.cli.download("en_core_web_sm")
 
 
 st.set_page_config(page_title="Dashboard",page_icon="🌍",layout="wide")
