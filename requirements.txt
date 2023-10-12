@@ -7,13 +7,13 @@ numpy==1.23.5
 oauthlib==3.2.2
 openpyxl==3.1.2
 
-PyAudio-0.2.11-cp38-cp38-win_amd64.whl
+#PyAudio-0.2.11-cp38-cp38-win_amd64.whl
 #portaudio19-dev
 #portaudio
-pyaudio-wheels
-pyproject-toml
+#pyaudio-wheels
+#pyproject-toml
 
-PyAudio
+#PyAudio
 opt-einsum==3.3.0
 packaging==23.1
 pandas==2.0.1
