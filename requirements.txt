@@ -14,7 +14,6 @@ packaging==23.1
 pandas==2.0.1
 pandas-profiling==3.2.0
 streamlit
-streamlit_chat
 streamlit-apexjs
 streamlit-card
 streamlit-elements
@@ -28,7 +27,7 @@ pmdarima==1.8.2
 statsmodels==0.13.3
 surprise==0.1
 langchain
-streamlit_chat==1.0.0
+streamlit_chat
 datetime==4.4
 python-dateutil==2.8.2
 transformers==4.11.0
