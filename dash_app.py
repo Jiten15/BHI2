@@ -341,8 +341,10 @@ def assistant():
 			if start_date != end_date:
 
 				df['Date'] = pd.to_datetime(df['Invoice Date'])
+				selected_column=selected_column.title()
 
 				df2= df[['Date','Total Sales','Price per Unit','Units Sold','Operating Profit','Operating Margin']]
+				df2['Price Per Unit']=df2['Price per Unit']
 				df2 = df2.groupby('Date')[[selected_column]].sum().reset_index()
 
 				df2.set_index('Date', inplace=True)
